@@ -17,7 +17,8 @@
 #define CTR_KEY(k) ((k) & 0x1f)
 
 int main() {
-  // Get the default terminal we are working with.
+
+    // Get the default terminal we are working with.
     struct termios old_term, term;
     char c;
 
@@ -27,7 +28,7 @@ int main() {
     }
 
     //Now lets set default terminal in raw mode
-    /*
+      /*
       This is equivalent to set the following attributes:
       term.c_iflag &= ~ (IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
       term.c_oflag &= ~OPOST
@@ -55,7 +56,8 @@ int main() {
      */
 
     for(read(STDIN_FILENO, &c, 1); c != CTR_KEY('c'); read(STDIN_FILENO, &c, 1)) {
-        if (c == '\e') {
+        if (c == '\e')
+        {
             char seq[3];
             read(STDIN_FILENO, seq, 2);
 
@@ -80,9 +82,17 @@ int main() {
                 }
             }
         }
+        if (c == '\r')
+        { 
+            printf("Pressed Enter\r\n");
+        }
+        if (c == 127)
+        {
+            printf("Pressed Backspace\r\n");
+        }
         else 
         {
-            printf("%c\n\e[1A", c);
+            printf("%c\n\e[1A",c);
         }
     }
 
