@@ -1,1 +1,1 @@
-gcc test.cpp -o test.o   && ./test.o
+gcc test.c -o test.o   && ./test.o

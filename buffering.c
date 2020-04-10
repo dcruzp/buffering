@@ -95,7 +95,6 @@ int main() {
             printf("%c\n\e[1A",c);
         }
     }
-
     tcsetattr(STDIN_FILENO, TCSANOW, &old_term);
     exit(0);
 }
