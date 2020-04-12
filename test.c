@@ -47,7 +47,7 @@ int main (int argc , char * argv [])
     initializeShell();
 
     while (TRUE)
-    { 
+    {  
         char c ;
         for (read(STDIN_FILENO,&c ,1); c!=CTR_KEY('c'); read (STDIN_FILENO,&c ,1))
         {            
@@ -62,18 +62,23 @@ int main (int argc , char * argv [])
                     {
                     case 'A':   
                     {
+                        write(STDOUT_FILENO,"\x1b[A",3);
+                        //savecurrentcoordenate();
                         continue; 
                     }                     
                     case 'B':
-                    {
+                    { 
+                        write(STDOUT_FILENO,"\x1b[B",3);
                         continue; 
                     }
                     case 'C':
                     {
+                        write(STDOUT_FILENO,"\x1b[C",3); 
                         continue; 
                     }
                     case 'D':
-                    {                        
+                    {   
+                        write(STDOUT_FILENO,"\x1b[D",3);                      
                         continue;
                     }
                     default:
@@ -98,16 +103,18 @@ int main (int argc , char * argv [])
                     //if (e<0) continue ; 
                    
                     
-                    write(STDOUT_FILENO,"\x1b[D",3); 
-                    write (STDOUT_FILENO,"\x1b[K",3);                  
-                    
+                    write(STDOUT_FILENO,"\x1b[D",3);   
+                    write(STDOUT_FILENO,"\x1b[A",3);  
+                    write(STDOUT_FILENO,"\x1b[K",3);                  
                 }
             }
             else 
             {
                 cmd [cnt++] = c;
-                printf("%c\n\e[1A",c);
+                printf("%c\n\e[A",c);
+                write(STDOUT_FILENO,"\e[A",3);                  
             }
+            
         }
         
 
@@ -116,6 +123,26 @@ int main (int argc , char * argv [])
             tcsetattr(STDIN_FILENO,TCSANOW,&old_term);
             exit(0);
         }
+        
+
+
+        /*-------------------------------------------*/   
+
+        /*
+        printf("%s", "SHELL>"); 
+        __fpurge(stdin); 
+        memset(cmd , '\0' , 1024);   
+        scanf("%[^\n]s", cmd); 
+        strcpy (history[cntcmd++], cmd); 
+
+        if (strcmp(cmd , "exit") ==0 ) 
+        {
+            save_history (); 
+            break;
+        } 
+        else if (strncmp(cmd , "history" , 7)==0 ) 
+            print_history(); 
+        */
     }
       
 }
@@ -137,6 +164,7 @@ void print_history (void)
     {   
         printf("%d %s\n" , i+1 , history[i]) ;
     }
+    
 } 
 
 void save_history (void)
@@ -152,6 +180,27 @@ void save_history (void)
     }
     
 }
+
+void save_command(char cmd [])
+{
+    FILE *f =NULL ; 
+    f = fopen(".history", "r"); 
+    
+    if (f == NULL)
+    {
+        perror ("Error al abrir el fichero '.history'");
+        exit(0);
+    }
+    else 
+    { 
+        if (fputs(cmd,(FILE*)f)<0)
+        {
+            perror("Error al escribir en el fichero '.history'");
+            exit(0);
+        }
+    }
+
+} 
 
 void load_history (void)
 {
@@ -214,15 +263,18 @@ void initializeShell (void)
     write(STDOUT_FILENO,"\x1b[?25l" , 6);
     write(STDOUT_FILENO,"\x1b[H" , 3);
     
-
+    write(STDOUT_FILENO,"\e[32m",5);
+    
     char buf [7] = "Shell$ ";
     int i = 0 ; 
     while (i<strlen(buf))
     {                  
         printf("%c\n\e[1A",buf[i]);
+        //write(STDOUT_FILENO,buf[i],1);
         i++;
     }
-
+    write(STDOUT_FILENO,"\e[0m",4);
+    write(STDOUT_FILENO,"\x1b[A" , 3);
     write(STDOUT_FILENO,"\x1b[?25h" , 6);
 }
 
@@ -236,19 +288,60 @@ void enableRawMode (void)
     }
 
     term = old_term;
-    cfmakeraw(&term);
-    /*
+    //cfmakeraw(&term);
+    
+    
     term.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
     term.c_oflag &= ~(OPOST);
     term.c_cflag |= (CS8);
     term.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
-    term.c_cc[VMIN] = 0;
-    term.c_cc[VTIME] = 1;
-    */
+    //term.c_lflag &= ~(ICANON | IEXTEN | ISIG);
+    //term.c_cc[VMIN] = 0;
+    //term.c_cc[VTIME] = 1;
+    
 
     if (tcsetattr(STDIN_FILENO,TCSANOW,&term))
     {
         perror("Error while seting new config\n");
         exit(1);
+    }
+}
+
+void savecurrentcoordenate(void)
+{
+    FILE *f = NULL ; 
+    f = fopen("escape.txt", "w");
+
+    if (f ==NULL)
+    {
+        perror ("No se pudo abrir el fichero 'escape.txt'");
+        exit (1);
+    }
+    else 
+    {
+        int row , col ; 
+        int result = getCursorPosition(&row,&col);
+        //int result = getWindowSize(&row , &col);
+        fprintf((FILE*)f, "%d;%d\n" , row , col);
+    }
+}
+
+void saveactualcmd(void)
+{
+    FILE *f = NULL ; 
+    f = fopen("escape.txt", "w");
+
+    if (f ==NULL)
+    {
+        perror ("No se pudo abrir el fichero 'escape.txt'");
+        exit (1);
+    }
+    else 
+    {
+        //int row , col ; 
+        //int result = getCursorPosition(&row,&col);
+        //int result = getWindowSize(&row , &col);
+        //fprintf((FILE*)f, "%d;%d\n" , row , col);
+        fprintf((FILE*)f,"%s", cmd);
     }
 }
